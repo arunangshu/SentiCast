@@ -1,5 +1,27 @@
 # SentiCast - Cryptocurrency Analytics and Forecasting Platform
 
+[![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.28%2B-FF4B4B?logo=streamlit)](https://streamlit.io/)
+[![TensorFlow](https://img.shields.io/badge/TensorFlow-2.10%2B-FF6F00?logo=tensorflow)](https://www.tensorflow.org/)
+[![Pandas](https://img.shields.io/badge/Pandas-2.0%2B-150458?logo=pandas)](https://pandas.pydata.org/)
+[![Plotly](https://img.shields.io/badge/Plotly-5.0%2B-3F4F75?logo=plotly)](https://plotly.com/)
+[![Statsmodels](https://img.shields.io/badge/Statsmodels-0.13%2B-blue)](https://www.statsmodels.org/)
+
+[![Binance API](https://img.shields.io/badge/Binance%20API-Market%20Data-F0B90B)](https://binance-docs.github.io/apidocs/)
+[![News API](https://img.shields.io/badge/News%20API-Articles-CF0000)](https://newsapi.org/)
+[![Reddit](https://img.shields.io/badge/Reddit-Social%20Data-FF4500?logo=reddit)](https://www.reddit.com/)
+
+[![Time Series](https://img.shields.io/badge/Time%20Series-Forecasting-success)](https://github.com/arunangshu/SentiCast/)
+[![ARIMA](https://img.shields.io/badge/ARIMA-Modeling-informational)](https://github.com/arunangshu/SentiCast/)
+[![LSTM](https://img.shields.io/badge/LSTM-Neural%20Networks-blueviolet)](https://github.com/arunangshu/SentiCast/)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/arunangshu/SentiCast/graphs/commit-activity)
+[![Status](https://img.shields.io/badge/Status-Active-success.svg)](https://github.com/arunangshu/SentiCast/)
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://senticast.streamlit.app/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Documentation](https://img.shields.io/badge/Documentation-Yes-brightgreen.svg)](https://github.com/arunangshu/SentiCast/)
+
 A robust Streamlit application for real-time cryptocurrency analytics, interactive visualizations, and advanced time-series forecasting of cryptocurrency prices.
 
 ## Features
