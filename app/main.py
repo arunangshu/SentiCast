@@ -189,7 +189,7 @@ def main():
         historical_data = fetch_historical_data(trading_symbol, days=int(historical_days))
         
         # Create tabs for different charts
-        price_tab, rsi_tab, analysis_tab, prediction_tab, sentiment_tab = st.tabs(["Price Chart", "RSI Indicator", "Data Analysis", "Prediction", "Social Media Sentiment"])
+        price_tab, rsi_tab, analysis_tab, prediction_tab, sentiment_tab = st.tabs(["Price Chart", "RSI Indicator", "Data Analysis", "Prediction", "Media Sentiment"])
         
         # Display price chart in the first tab
         with price_tab:

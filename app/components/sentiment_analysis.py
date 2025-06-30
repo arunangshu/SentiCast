@@ -549,13 +549,21 @@ def render_sentiment_analysis_tab(cryptocurrency, key_prefix="sentiment_"):
     st.subheader("Social Media & News Analysis")
     st.markdown(f"Showing content related to **{cryptocurrency}** from the last 5 days")
     
-    # Add data source selection
+    # Initialize session state for source selection if it doesn't exist
+    if f"{key_prefix}_source" not in st.session_state:
+        st.session_state[f"{key_prefix}_source"] = "Reddit"
+    
+    # Add data source selection and update session state
     source_option = st.radio(
         "Select data source:",
         ["Reddit", "News"],
+        index=0 if st.session_state[f"{key_prefix}_source"] == "Reddit" else 1,
         horizontal=True,
-        key=f"{key_prefix}_source"
+        key=f"{key_prefix}_source_radio"
     )
+    
+    # Update the session state with the current selection
+    st.session_state[f"{key_prefix}_source"] = source_option
     
     # Fetch data based on selected source
     with st.spinner(f"Fetching {source_option.lower()} data..."):
