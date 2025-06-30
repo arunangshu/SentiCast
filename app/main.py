@@ -27,16 +27,53 @@ st.set_page_config(
 # Apply custom CSS
 st.markdown("""
     <style>
+    /* Import font */
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    
+    /* Only apply Poppins to these specific elements */
+    .stTextInput label,
+    .stNumberInput label, 
+    .stSelectbox label,
+    div.stTextInput input,
+    div.stNumberInput input,
+    textarea,
+    div.stMarkdown p,
+    div.stMarkdown li,
+    div.stMarkdown h1, div.stMarkdown h2, div.stMarkdown h3, 
+    div.stMarkdown h4, div.stMarkdown h5, div.stMarkdown h6,
+    div.stText,
+    div[role="alert"],
+    div.stTitle,
+    div.stHeader,
+    div.stSubheader,
+    .stButton button p,
+    div[data-testid="stForm"],
+    div[data-testid="stMetricLabel"],
+    div[data-testid="stMetricValue"] span,
+    div[data-testid="stMetricDelta"] span,
+    table {
+        font-family: 'Poppins', sans-serif !important;
+    }
+    
+    /* Style for headings */
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Poppins', sans-serif !important;
+        font-weight: 600 !important;
+    }
+    
+    /* Style adjustments */
     .main .block-container {padding-top: 1rem;}
     div[data-testid="stMetricValue"] {font-size: 1.2rem;}
     div[data-testid="stMetricDelta"] {font-size: 0.8rem;}
+    
+    /* Error message styling */
     .error-message {
         background-color: #ffcdd2;
         border-left: 5px solid #f44336;
         padding: 15px;
         margin-bottom: 20px;
         border-radius: 4px;
-        font-family: monospace;
+        font-family: 'Poppins', sans-serif !important;
         white-space: pre-wrap;
         overflow-x: auto;
     }
