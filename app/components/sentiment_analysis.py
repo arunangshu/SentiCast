@@ -7,9 +7,20 @@ import re
 import os
 import json
 from dotenv import load_dotenv
+from app.utils.data_fetcher import is_streamlit_cloud
 
 # Load environment variables
 load_dotenv()
+
+# Helper function for debug logging
+def debug_log(message):
+    """Log debug messages in development mode"""
+    # Check if we're in development mode (can be set in .streamlit/config.toml)
+    dev_mode = os.environ.get('STREAMLIT_ENV', '') == 'development'
+    if dev_mode:
+        st.write(f"DEBUG: {message}")
+    # Always print to console for server logs
+    print(f"DEBUG: {message}")
 
 def fetch_facebook_posts(cryptocurrency, days=5):
     """
@@ -153,74 +164,102 @@ def fetch_reddit_posts(cryptocurrency, days=5, limit=100):
             - permalink: Link to the post
             - source: Source platform (Reddit)
     """
-    # Use the Reddit search URL to get real data
-    try:
-        # Format the search URL with the cryptocurrency name
-        search_url = f"https://www.reddit.com/search/.json?q={cryptocurrency}&type=posts&sort=hot"
-        
-        # Set a user agent to avoid being blocked
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        
-        # Make the request to Reddit
-        response = requests.get(search_url, headers=headers, timeout=10)
-        
-        # Check if request was successful
-        if response.status_code == 200:
-            # Parse the JSON response
-            data = response.json()
-            
-            # Extract post data
-            posts = []
-            
-            if 'data' in data and 'children' in data['data']:
-                children = data['data']['children']
-                
-                # Process each post in the data
-                for child in children:
-                    if 'data' in child:
-                        post_data = child['data']
-                        
-                        # Extract upvotes safely
-                        try:
-                            upvotes = int(post_data.get('ups', 0))
-                        except (ValueError, TypeError):
-                            upvotes = 0
-                        
-                        # Create post entry
-                        post = {
-                            'date': datetime.fromtimestamp(post_data.get('created_utc', time.time())),
-                            'text': post_data.get('selftext', ''),
-                            'title': post_data.get('title', ''),
-                            'username': post_data.get('author', 'unknown'),
-                            'upvotes': upvotes,
-                            'subreddit': post_data.get('subreddit_name_prefixed', ''),
-                            'permalink': post_data.get('permalink', ''),
-                            'source': 'Reddit'
-                        }
-                        posts.append(post)
-                
-                # Convert to DataFrame
-                if posts:
-                    df = pd.DataFrame(posts)
-                    
-                    # Sort by date (most recent first)
-                    df = df.sort_values('date', ascending=False)
-                    
-                    # Ensure 'likes' column exists for compatibility
-                    df['likes'] = df['upvotes']
-                    
-                    return df
-        
-        # If request failed or no posts found, try using sample data
-        st.warning("Failed to fetch real Reddit data. Falling back to sample data.")
-            
-    except Exception as e:
-        st.warning(f"Error fetching Reddit data: {str(e)}. Falling back to sample data.")
+    # Check if we're running on Streamlit Cloud
+    running_on_cloud = is_streamlit_cloud()
     
-    # Fall back to using the sample data if available
+    # Skip the API request if we're on Streamlit Cloud to avoid CORS issues
+    if running_on_cloud:
+        debug_log("Running on Streamlit Cloud - skipping direct Reddit API call")
+        # Skip to sample data directly
+    else:
+        # Use the Reddit search URL to get real data when running locally
+        try:
+            # Format the search URL with the cryptocurrency name
+            search_url = f"https://www.reddit.com/search/.json?q={cryptocurrency}&type=posts&sort=hot&limit={limit}"
+            
+            # Set a more specific user agent to avoid being blocked
+            headers = {
+                'User-Agent': 'SentiCast/1.0 (Cryptocurrency Analysis App; https://github.com/yourusername/SentiCast)',
+                'Accept': 'application/json',
+                'Accept-Language': 'en-US,en;q=0.5',
+                'Referer': 'https://www.reddit.com/',
+                'Origin': 'https://www.reddit.com',
+                'DNT': '1',
+                'Connection': 'keep-alive',
+            }
+            
+            # Make the request to Reddit with a timeout
+            debug_log(f"Attempting to fetch Reddit data for {cryptocurrency}...")
+            response = requests.get(search_url, headers=headers, timeout=15)
+            
+            # Check if request was successful
+            if response.status_code == 200:
+                # Parse the JSON response
+                data = response.json()
+                
+                # Extract post data
+                posts = []
+                
+                if 'data' in data and 'children' in data['data']:
+                    children = data['data']['children']
+                    
+                    # Process each post in the data
+                    for child in children:
+                        if 'data' in child:
+                            post_data = child['data']
+                            
+                            # Extract upvotes safely
+                            try:
+                                upvotes = int(post_data.get('ups', 0))
+                            except (ValueError, TypeError):
+                                upvotes = 0
+                            
+                            # Create post entry
+                            post = {
+                                'date': datetime.fromtimestamp(post_data.get('created_utc', time.time())),
+                                'text': post_data.get('selftext', ''),
+                                'title': post_data.get('title', ''),
+                                'username': post_data.get('author', 'unknown'),
+                                'upvotes': upvotes,
+                                'subreddit': post_data.get('subreddit_name_prefixed', ''),
+                                'permalink': post_data.get('permalink', ''),
+                                'source': 'Reddit'
+                            }
+                            posts.append(post)
+                    
+                    # Convert to DataFrame
+                    if posts:
+                        df = pd.DataFrame(posts)
+                        
+                        # Sort by date (most recent first)
+                        df = df.sort_values('date', ascending=False)
+                        
+                        # Ensure 'likes' column exists for compatibility
+                        df['likes'] = df['upvotes']
+                        
+                        debug_log(f"Successfully fetched {len(df)} Reddit posts for {cryptocurrency}")
+                        return df
+                    else:
+                        debug_log(f"No posts found in Reddit response for {cryptocurrency}")
+                else:
+                    debug_log(f"Invalid Reddit response format for {cryptocurrency}")
+            else:
+                debug_log(f"Reddit API returned status code {response.status_code} for {cryptocurrency}")
+                
+            # If we get here, the request failed or no posts were found
+            if running_on_cloud:
+                debug_log("Skipping warning on Streamlit Cloud")
+            else:
+                st.warning(f"Could not fetch Reddit data (Status: {response.status_code}). Using sample data instead.")
+                
+        except Exception as e:
+            if not running_on_cloud:  # Only show warning if not on cloud
+                st.warning(f"Error fetching Reddit data: {str(e)}. Using sample data instead.")
+            debug_log(f"Error in Reddit fetch: {str(e)}")
+    
+    # Fall back to using the sample data
     try:
+        debug_log("Attempting to use sample data from search.json...")
         # Try to read the sample search.json file if available
         with open('search.json', 'r') as f:
             sample_data = json.load(f)
@@ -236,10 +275,18 @@ def fetch_reddit_posts(cryptocurrency, days=5, limit=100):
                 if 'data' in child:
                     post_data = child['data']
                     
-                    # Check if post contains the cryptocurrency term
-                    if cryptocurrency.lower() in post_data.get('title', '').lower() or \
-                       cryptocurrency.lower() in post_data.get('selftext', '').lower():
-                        
+                    # Check if post contains the cryptocurrency term (case-insensitive)
+                    # Make the filter more lenient in cloud environment
+                    should_include = False
+                    if running_on_cloud:
+                        # In cloud, be more lenient with filtering to ensure we show some results
+                        should_include = True
+                    else:
+                        # When running locally, filter more strictly
+                        should_include = (cryptocurrency.lower() in post_data.get('title', '').lower() or 
+                                         cryptocurrency.lower() in post_data.get('selftext', '').lower())
+                    
+                    if should_include:
                         # Create post entry with proper defaults for all required fields
                         post = {
                             'date': datetime.fromtimestamp(post_data.get('created_utc', time.time())),
@@ -255,22 +302,29 @@ def fetch_reddit_posts(cryptocurrency, days=5, limit=100):
             
         # If we found relevant posts in the sample data, return them
         if posts:
-            # Create DataFrame with explicit columns to ensure all fields exist
-            df = pd.DataFrame(posts, columns=[
-                'date', 'text', 'title', 'username', 'upvotes', 
-                'subreddit', 'permalink', 'source'
-            ])
+            # Create DataFrame
+            df = pd.DataFrame(posts)
             
             # Sort by date (most recent first)
             df = df.sort_values('date', ascending=False)
             
+            debug_log(f"Successfully loaded {len(df)} posts from sample data")
+            
+            # Add a note if we're on Streamlit Cloud
+            if running_on_cloud:
+                st.info("Using sample Reddit data in cloud deployment. For real-time Reddit data, run the application locally.")
+                
             return df
+        else:
+            debug_log("No matching posts found in sample data")
     
     except Exception as e:
         # If there was an error with sample data, fall back to generated data
-        pass
+        debug_log(f"Error loading sample data: {str(e)}. Generating mock data instead.")
     
     # Fall back to generated mock data
+    debug_log("Generating mock Reddit data...")
+    
     end_date = datetime.now()
     start_date = end_date - timedelta(days=days)
     
@@ -436,16 +490,21 @@ def fetch_news_articles(cryptocurrency, days=5):
             - url: URL to the article
             - urlToImage: URL to the article's image
     """
+    # Check if we're running on Streamlit Cloud
+    running_on_cloud = is_streamlit_cloud()
+    
     try:
         # Calculate the date from days ago
         from_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
         
         # Format the News API URL with the cryptocurrency name and from date
-        api_key = "e2e16856be41429bbef71c0c9a0c42b0"  # This is the API key provided in the prompt
+        api_key = os.environ.get("NEWS_API_KEY", "e2e16856be41429bbef71c0c9a0c42b0")  # Get from environment or use default
         news_url = f"https://newsapi.org/v2/everything?q={cryptocurrency}%20price&from={from_date}&sortBy=popularity&apiKey={api_key}"
         
+        debug_log(f"Attempting to fetch news data for {cryptocurrency}...")
+        
         # Make the request to News API
-        response = requests.get(news_url, timeout=10)
+        response = requests.get(news_url, timeout=15)
         
         # Check if request was successful
         if response.status_code == 200:
@@ -482,18 +541,27 @@ def fetch_news_articles(cryptocurrency, days=5):
                 # Sort by date (most recent first)
                 df = df.sort_values('date', ascending=False)
                 
+                debug_log(f"Successfully fetched {len(df)} news articles for {cryptocurrency}")
                 return df
             else:
-                st.warning("No news articles found for this cryptocurrency.")
-                return pd.DataFrame()
+                debug_log("No news articles found in API response")
         else:
-            st.warning(f"Failed to fetch news data. Status code: {response.status_code}")
+            debug_log(f"News API returned status code {response.status_code}")
             
+            # If we're on Streamlit Cloud and hit API limits, don't show the error
+            if running_on_cloud and response.status_code == 429:  # 429 is Too Many Requests
+                st.info("News API rate limit reached. Using sample data instead.")
+            elif not running_on_cloud:
+                st.warning(f"Failed to fetch news data. Status code: {response.status_code}")
+                
     except Exception as e:
-        st.warning(f"Error fetching news data: {str(e)}. Falling back to sample data.")
+        debug_log(f"Error fetching news data: {str(e)}")
+        if not running_on_cloud:  # Only show warning if not on cloud
+            st.warning(f"Error fetching news data: {str(e)}. Falling back to sample data.")
     
     # Fall back to using the sample data if available
     try:
+        debug_log("Attempting to use sample news data from news.json...")
         # Try to read the sample news.json file if available
         with open('news.json', 'r') as f:
             sample_data = json.load(f)
@@ -505,10 +573,17 @@ def fetch_news_articles(cryptocurrency, days=5):
             # Create list of article dictionaries
             news_list = []
             for article in articles:
-                # Check if article contains the cryptocurrency term
-                if (cryptocurrency.lower() in article.get('title', '').lower() or 
-                    cryptocurrency.lower() in article.get('description', '').lower()):
-                    
+                # Check if article contains the cryptocurrency term or use all in cloud mode
+                should_include = False
+                if running_on_cloud:
+                    # In cloud, be more lenient with filtering to ensure we show some results
+                    should_include = True
+                else:
+                    # When running locally, filter more strictly
+                    should_include = (cryptocurrency.lower() in article.get('title', '').lower() or 
+                                     cryptocurrency.lower() in article.get('description', '').lower())
+                
+                if should_include:
                     # Convert publishedAt to datetime
                     try:
                         published_date = datetime.strptime(article.get('publishedAt', ''), '%Y-%m-%dT%H:%M:%SZ')
@@ -532,11 +607,22 @@ def fetch_news_articles(cryptocurrency, days=5):
             # Sort by date (most recent first)
             df = df.sort_values('date', ascending=False)
             
+            # Add a note if we're on Streamlit Cloud
+            if running_on_cloud:
+                st.info("Using sample news data in cloud deployment. For real-time news data, run the application locally.")
+                
+            debug_log(f"Successfully loaded {len(df)} articles from sample data")
             return df
+        else:
+            debug_log("No articles found in sample data")
     
     except Exception as e:
         # If there was an error with sample data, return empty DataFrame
-        return pd.DataFrame()
+        debug_log(f"Error loading sample news data: {str(e)}")
+    
+    # If all else fails, return empty DataFrame
+    debug_log("Returning empty news DataFrame")
+    return pd.DataFrame()
 
 def render_sentiment_analysis_tab(cryptocurrency, key_prefix="sentiment_"):
     """

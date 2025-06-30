@@ -3,6 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 import time
 import numpy as np
+import os
 
 # Binance API base URL for market data
 BINANCE_API_BASE_URL = "https://data-api.binance.vision/api/v3"
@@ -445,4 +446,16 @@ def fetch_multiple_crypto_data():
     if not all_crypto_data and errors:
         raise APIError(f"Failed to fetch data for all cryptocurrencies: {'; '.join(errors)}")
     
-    return all_crypto_data 
+    return all_crypto_data
+
+# Add function to detect Streamlit Cloud environment
+def is_streamlit_cloud():
+    """
+    Check if the application is running on Streamlit Cloud
+    
+    Returns:
+        bool: True if running on Streamlit Cloud, False otherwise
+    """
+    # Streamlit Cloud sets these environment variables
+    return os.environ.get('STREAMLIT_SHARING', '') == 'true' or \
+           os.environ.get('IS_STREAMLIT_CLOUD', '') == 'true' 

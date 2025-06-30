@@ -240,6 +240,24 @@ The application leverages the following data sources:
 - **Reddit Search**: Posts and discussions from cryptocurrency subreddits
 - **News API**: Latest news articles related to cryptocurrencies
 
+## Streamlit Cloud Deployment
+
+When deploying the application on Streamlit Cloud, please note the following:
+
+1. **Reddit Data**: Due to CORS restrictions, the direct Reddit search functionality will automatically fall back to using sample data from the `search.json` file. This is a known limitation of making cross-origin requests from Streamlit Cloud.
+
+2. **News API**: The News API has rate limits that may be quickly reached when deployed on Streamlit Cloud. The application will automatically fall back to sample data from `news.json` if rate limits are exceeded.
+
+3. **Sample Data**: To ensure the application works smoothly on Streamlit Cloud:
+   - Make sure `search.json` and `news.json` are included in your repository
+   - These files are explicitly excluded from `.gitignore` to ensure they're available
+
+4. **Environment Variables**: For full functionality, set the following environment variables in Streamlit Cloud:
+   - `NEWS_API_KEY`: Your News API key for higher rate limits
+   - `STREAMLIT_ENV`: Set to 'production' for deployment
+
+5. **Local Development**: When running locally, the application will attempt to fetch real-time data from both Reddit and News API before falling back to sample data.
+
 ## Future Enhancements
 
 - ~~Twitter sentiment analysis integration for market sentiment indicators~~ (Implemented Facebook and Reddit instead)
