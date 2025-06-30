@@ -91,9 +91,9 @@ def render_sidebar():
     - Real-time price tracking in INR
     - Interactive historical charts
     - Price prediction using time series models
-    
-    Coming Soon:
-    - Twitter sentiment analysis
+    - Reddit posts sentiment analysis
+    - News articles from NewsAPI
+    - Advanced data analysis tools
     """)
     
     return selected_crypto, historical_days, refresh_interval 

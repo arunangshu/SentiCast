@@ -15,6 +15,7 @@ from app.components.sidebar import render_sidebar
 from app.components.charts import price_chart, price_change_gauge, market_stats_metrics, rsi_chart
 from app.components.data_analysis import render_data_analysis_tab
 from app.components.prediction import render_prediction_tab
+from app.components.sentiment_analysis import render_sentiment_analysis_tab
 
 # Set page config
 st.set_page_config(
@@ -111,7 +112,8 @@ def main():
     
     # Display info message about data source
     st.info("""
-    Data source: Binance API for crypto prices, Exchange Rate API for USD to INR conversion
+    Data sources: Binance API for crypto prices, Exchange Rate API for USD to INR conversion,
+    Meta Content Library API for Facebook posts, and Reddit search for social media sentiment analysis.
     Prices are converted from USD to INR using real-time exchange rates.
     """)
     
@@ -157,6 +159,9 @@ def main():
         )
     except APIError as e:
         st.sidebar.warning(f"Could not fetch exchange rate: {str(e)}")
+
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("Made by Arunangshu Karmakar")
     
     try:
         # Fetch current cryptocurrency data
@@ -181,10 +186,10 @@ def main():
     # Historical data section
     try:
         # Fetch historical data
-        historical_data = fetch_historical_data(trading_symbol, days=historical_days)
+        historical_data = fetch_historical_data(trading_symbol, days=int(historical_days))
         
         # Create tabs for different charts
-        price_tab, rsi_tab, analysis_tab, prediction_tab = st.tabs(["Price Chart", "RSI Indicator", "Data Analysis", "Prediction"])
+        price_tab, rsi_tab, analysis_tab, prediction_tab, sentiment_tab = st.tabs(["Price Chart", "RSI Indicator", "Data Analysis", "Prediction", "Social Media Sentiment"])
         
         # Display price chart in the first tab
         with price_tab:
@@ -216,6 +221,11 @@ def main():
         with prediction_tab:
             # Use fixed key prefixes to maintain state between refreshes
             render_prediction_tab(historical_data, key_prefix="prediction_fixed")
+            
+        # Display Sentiment Analysis tab
+        with sentiment_tab:
+            # Use fixed key prefixes to maintain state between refreshes
+            render_sentiment_analysis_tab(selected_crypto, key_prefix="sentiment_fixed")
         
     except APIError as e:
         st.subheader("Historical Data")
@@ -235,8 +245,8 @@ def main():
     st.subheader("About")
     st.info(f"""
     **SentiCast** provides real-time cryptocurrency data and analysis.
-    Future updates will incorporate Twitter sentiment data to provide 
-    more comprehensive market insights.
+    The platform incorporates social media sentiment data from Facebook and Reddit
+    to provide comprehensive market insights.
     
     All cryptocurrency prices are shown in Indian Rupees (INR), converted from USD using current exchange rates.
     """)

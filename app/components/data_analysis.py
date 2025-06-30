@@ -691,3 +691,4 @@ def render_data_analysis_tab(historical_data, key_prefix="analysis"):
                 st.info("Try increasing the moving average window or downsampling factor to smooth the data.")
     else:
         st.error("Could not achieve stationarity with the maximum allowed differencing order.")
+ 

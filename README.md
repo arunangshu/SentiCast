@@ -12,6 +12,19 @@ A robust Streamlit application for real-time cryptocurrency analytics, interacti
 - Customizable refresh intervals and history periods
 - Relative Strength Index (RSI) indicator visualization
 
+### Social Media & News Analysis
+- Comprehensive cryptocurrency sentiment analysis from multiple sources:
+  - Reddit posts using direct Reddit search functionality
+  - News articles from NewsAPI with full article descriptions
+- Filtering options for both data sources:
+  - Reddit: Sort by upvotes or recency, minimum upvotes filter, keyword search
+  - News: Sort by recency or alphabetically, keyword search
+- Modern UI with Poppins font and clean card-based design
+- Post engagement metrics (upvotes for Reddit)
+- Clickable post titles that link to original content
+- Full article descriptions and post content without truncation
+- News article thumbnails with source attribution
+
 ### Advanced Data Analysis
 - Interactive time-series preprocessing:
   - Configurable moving average window selection (odd values only)
@@ -57,6 +70,8 @@ A robust Streamlit application for real-time cryptocurrency analytics, interacti
 - **API Integration**:
   - Binance API - Cryptocurrency data
   - Exchange Rate API - USD to INR conversion
+  - News API - Latest cryptocurrency news
+  - Reddit Search API - Social media posts
 - **Performance Metrics**:
   - Scikit-learn - Model evaluation metrics
 
@@ -72,6 +87,7 @@ SentiCast/
 │   │   ├── sidebar.py      # Sidebar components and controls
 │   │   ├── charts.py       # Chart visualization components
 │   │   ├── data_analysis.py # Time-series analysis components
+│   │   ├── sentiment_analysis.py # Social media sentiment analysis
 │   │   └── prediction.py   # Time-series forecasting components
 │   └── utils/              # Utility functions
 │       ├── __init__.py
@@ -98,7 +114,7 @@ SentiCast/
    ```
    python run_app.py
    ```
-
+   
 ## Detailed Usage Guide
 
 ### Main Dashboard
@@ -125,6 +141,29 @@ SentiCast/
 2. Values above 70 indicate potential overbought conditions
 3. Values below 30 indicate potential oversold conditions
 4. Use this information for technical analysis and entry/exit points
+
+### Social Media & News Tab
+
+1. **Choose data sources**:
+   - Toggle between Reddit posts and News articles
+   - Each source has dedicated filtering options
+
+2. **Reddit filtering options**:
+   - Sort by most upvotes or most recent posts
+   - Set minimum upvotes threshold
+   - Filter by specific keywords
+   - Click post titles to view original content on Reddit
+
+3. **News filtering options**:
+   - Sort by most recent or alphabetically by title
+   - Filter by specific keywords
+   - View article thumbnails and full descriptions
+   - Click headlines to read complete articles
+
+4. **Analyze market sentiment**:
+   - Track discussions and news coverage about cryptocurrencies
+   - Identify trending topics and public perception
+   - Use social sentiment as a complementary market indicator
 
 ### Data Analysis Tab
 
@@ -198,10 +237,12 @@ SentiCast/
 The application leverages the following data sources:
 - **Binance API**: Real-time cryptocurrency data
 - **Exchange Rate API**: Current USD to INR conversion rates
+- **Reddit Search**: Posts and discussions from cryptocurrency subreddits
+- **News API**: Latest news articles related to cryptocurrencies
 
 ## Future Enhancements
 
-- Twitter sentiment analysis integration for market sentiment indicators
+- ~~Twitter sentiment analysis integration for market sentiment indicators~~ (Implemented Facebook and Reddit instead)
 - Portfolio management and tracking tools
 - Support for additional cryptocurrencies
 - Additional deep learning forecasting models (GRU, Transformer)
@@ -209,7 +250,8 @@ The application leverages the following data sources:
 - Technical indicator overlays on price charts
 - Backtesting framework for trading strategies
 - Export capabilities for charts and predictions
+- Sentiment scoring and analysis using NLP models
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the LICENSE file for details. 
