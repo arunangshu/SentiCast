@@ -637,13 +637,13 @@ def render_sentiment_analysis_tab(cryptocurrency, key_prefix="sentiment_"):
     
     # Initialize session state for source selection if it doesn't exist
     if f"{key_prefix}_source" not in st.session_state:
-        st.session_state[f"{key_prefix}_source"] = "Reddit"
+        st.session_state[f"{key_prefix}_source"] = "News"  # Changed default to News
     
     # Add data source selection and update session state
     source_option = st.radio(
         "Select data source:",
-        ["Reddit", "News"],
-        index=0 if st.session_state[f"{key_prefix}_source"] == "Reddit" else 1,
+        ["News", "Reddit"],  # Switched order to make News first
+        index=0 if st.session_state[f"{key_prefix}_source"] == "News" else 1,  # Updated index logic
         horizontal=True,
         key=f"{key_prefix}_source_radio"
     )
@@ -654,7 +654,122 @@ def render_sentiment_analysis_tab(cryptocurrency, key_prefix="sentiment_"):
     # Fetch data based on selected source
     with st.spinner(f"Fetching {source_option.lower()} data..."):
         try:
-            if source_option == "Reddit":
+            if source_option == "News":
+                news_df = fetch_news_articles(cryptocurrency)
+                st.caption(f"Found {len(news_df)} news articles about {cryptocurrency}")
+                
+                # Add filters
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    search_term = st.text_input(
+                        "Filter by keyword",
+                        key=f"{key_prefix}_news_search"
+                    )
+                
+                with col2:
+                    sort_option = st.selectbox(
+                        "Sort by", 
+                        ["Most Recent", "Alphabetical"],
+                        key=f"{key_prefix}_news_sort"
+                    )
+                
+                # Apply filters
+                if search_term:
+                    # Search in both title and description
+                    mask = (news_df["title"].str.contains(search_term, case=False, na=False) | 
+                            news_df["description"].str.contains(search_term, case=False, na=False))
+                    news_df = news_df[mask]
+                
+                # Apply sorting
+                if sort_option == "Most Recent":
+                    news_df = news_df.sort_values("date", ascending=False)
+                elif sort_option == "Alphabetical":
+                    news_df = news_df.sort_values("title")
+                
+                # Display news articles
+                if news_df.empty:
+                    st.info("No news articles match your filters.")
+                else:
+                    # Custom CSS for news article display
+                    st.markdown("""
+                    <style>
+                    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+                    .news-container {
+                        background-color: #ffffff;
+                        border: 1px solid #e1e8ed;
+                        border-radius: 12px;
+                        padding: 12px;
+                        margin-bottom: 15px;
+                        display: flex;
+                        font-family: 'Poppins', sans-serif;
+                    }
+                    .news-image {
+                        width: 120px;
+                        height: 80px;
+                        margin-right: 15px;
+                        object-fit: cover;
+                        border-radius: 8px;
+                    }
+                    .news-content {
+                        flex: 1;
+                    }
+                    .news-title {
+                        font-weight: bold;
+                        margin-bottom: 5px;
+                        font-size: 1.1em;
+                    }
+                    .news-title a {
+                        color: #1a0dab;
+                        text-decoration: none;
+                    }
+                    .news-title a:hover {
+                        text-decoration: underline;
+                    }
+                    .news-description {
+                        color: #333;
+                        margin-bottom: 10px;
+                    }
+                    .news-meta {
+                        display: flex;
+                        justify-content: space-between;
+                        color: #657786;
+                        font-size: 0.9em;
+                    }
+                    .news-source {
+                        font-weight: bold;
+                    }
+                    .news-date {
+                        color: #657786;
+                    }
+                    </style>
+                    """, unsafe_allow_html=True)
+                    
+                    # Display each news article
+                    for _, article in news_df.head(50).iterrows():
+                        # Default image if none is provided
+                        image_url = article.get('urlToImage', '')
+                        if not image_url or pd.isna(image_url):
+                            image_url = "https://via.placeholder.com/120x80?text=No+Image"
+                        
+                        # Format the article HTML
+                        article_html = f"""
+                        <div class="news-container">
+                            <img class="news-image" src="{image_url}" alt="Article thumbnail">
+                            <div class="news-content">
+                                <a href="{article['url']}" target="_blank" class="news-title">{article['title']}</a>
+                                <div class="news-description">{article['description']}</div>
+                                <div class="news-meta">
+                                    <span class="news-source">{article['source']}</span>
+                                    <span class="news-date">{article['date'].strftime("%Y-%m-%d %H:%M")}</span>
+                                </div>
+                            </div>
+                        </div>
+                        """
+                        
+                        st.markdown(article_html, unsafe_allow_html=True)
+                        
+            elif source_option == "Reddit":
                 posts_df = fetch_reddit_posts(cryptocurrency)
                 st.caption(f"Found {len(posts_df)} Reddit posts mentioning {cryptocurrency}")
                 
@@ -791,7 +906,7 @@ def render_sentiment_analysis_tab(cryptocurrency, key_prefix="sentiment_"):
                         if has_title:
                             post_html += f'<div class="post-title"><a href="{post_link}" target="_blank">{post["title"]}</a></div>'
                         
-                        # Add text content without truncation
+                        # Add text content
                         post_html += f"""
                             <div class="post-text">{post['text']}</div>
                             <div class="post-stats">{stats_html}</div>
@@ -799,121 +914,6 @@ def render_sentiment_analysis_tab(cryptocurrency, key_prefix="sentiment_"):
                         """
                         
                         st.markdown(post_html, unsafe_allow_html=True)
-                        
-            elif source_option == "News":
-                news_df = fetch_news_articles(cryptocurrency)
-                st.caption(f"Found {len(news_df)} news articles about {cryptocurrency}")
-                
-                # Add filters
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    search_term = st.text_input(
-                        "Filter by keyword",
-                        key=f"{key_prefix}_news_search"
-                    )
-                
-                with col2:
-                    sort_option = st.selectbox(
-                        "Sort by", 
-                        ["Most Recent", "Alphabetical"],
-                        key=f"{key_prefix}_news_sort"
-                    )
-                
-                # Apply filters
-                if search_term:
-                    # Search in both title and description
-                    mask = (news_df["title"].str.contains(search_term, case=False, na=False) | 
-                            news_df["description"].str.contains(search_term, case=False, na=False))
-                    news_df = news_df[mask]
-                
-                # Apply sorting
-                if sort_option == "Most Recent":
-                    news_df = news_df.sort_values("date", ascending=False)
-                elif sort_option == "Alphabetical":
-                    news_df = news_df.sort_values("title")
-                
-                # Display news articles
-                if news_df.empty:
-                    st.info("No news articles match your filters.")
-                else:
-                    # Custom CSS for news article display
-                    st.markdown("""
-                    <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-                    .news-container {
-                        background-color: #ffffff;
-                        border: 1px solid #e1e8ed;
-                        border-radius: 12px;
-                        padding: 12px;
-                        margin-bottom: 15px;
-                        display: flex;
-                        font-family: 'Poppins', sans-serif;
-                    }
-                    .news-image {
-                        width: 120px;
-                        height: 80px;
-                        margin-right: 15px;
-                        object-fit: cover;
-                        border-radius: 8px;
-                    }
-                    .news-content {
-                        flex: 1;
-                    }
-                    .news-title {
-                        font-weight: bold;
-                        margin-bottom: 5px;
-                        font-size: 1.1em;
-                    }
-                    .news-title a {
-                        color: #1a0dab;
-                        text-decoration: none;
-                    }
-                    .news-title a:hover {
-                        text-decoration: underline;
-                    }
-                    .news-description {
-                        color: #333;
-                        margin-bottom: 10px;
-                    }
-                    .news-meta {
-                        display: flex;
-                        justify-content: space-between;
-                        color: #657786;
-                        font-size: 0.9em;
-                    }
-                    .news-source {
-                        font-weight: bold;
-                    }
-                    .news-date {
-                        color: #657786;
-                    }
-                    </style>
-                    """, unsafe_allow_html=True)
-                    
-                    # Display each news article
-                    for _, article in news_df.head(50).iterrows():
-                        # Default image if none is provided
-                        image_url = article.get('urlToImage', '')
-                        if not image_url or pd.isna(image_url):
-                            image_url = "https://via.placeholder.com/120x80?text=No+Image"
-                        
-                        # Format the article HTML - show full description without truncation
-                        article_html = f"""
-                        <div class="news-container">
-                            <img class="news-image" src="{image_url}" alt="Article thumbnail">
-                            <div class="news-content">
-                                <a href="{article['url']}" target="_blank" class="news-title">{article['title']}</a>
-                                <div class="news-description">{article['description']}</div>
-                                <div class="news-meta">
-                                    <span class="news-source">{article['source']}</span>
-                                    <span class="news-date">{article['date'].strftime("%Y-%m-%d %H:%M")}</span>
-                                </div>
-                            </div>
-                        </div>
-                        """
-                        
-                        st.markdown(article_html, unsafe_allow_html=True)
                         
         except Exception as e:
             st.error(f"Error fetching data: {str(e)}")
